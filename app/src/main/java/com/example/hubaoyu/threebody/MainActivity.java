@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private String flag = "24aa5366b7223b1b30c0620326222275";
     private byte[] flagBytes = flag.getBytes();
 
-    private static final String IP = "10.2.25.238";
+    private static final String IP = "10.2.1.216";
     private static final int PORT = 7000;
     private long timestamp;
 
