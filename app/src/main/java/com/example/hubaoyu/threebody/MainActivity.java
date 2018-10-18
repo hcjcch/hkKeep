@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private static final int PORT = 7000;
     private long timestamp;
 
-
+    Thread thread = null;
     NettyClient nettyClient;
 
     @Override
@@ -105,6 +105,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         textNumber = findViewById(R.id.text_number);
         textStatus = findViewById(R.id.text_status);
         mSurfaceView = findViewById(R.id.sv_recording);
+//        DisplayMetrics dm = getResources().getDisplayMetrics();
+//        mSurfaceView.getLayoutParams().width =  dm.heightPixels * SRC_FRAME_HEIGHT/ SRC_FRAME_WIDTH ;
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.setFixedSize(SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT);
         mSurfaceHolder.addCallback(this);
@@ -242,17 +244,17 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             }
         });
 
-        new Thread(new Runnable() {
+        thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     nettyClient.connect(PORT, IP);
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        });
+        thread.start();
 
         statusLabel.setText("Connectioning");
     }
@@ -337,6 +339,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     protected void onDestroy() {
         super.onDestroy();
         nettyClient.disConnect();
+        thread.stop();
     }
 
 }
