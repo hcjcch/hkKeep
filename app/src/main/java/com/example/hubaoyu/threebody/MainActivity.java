@@ -54,12 +54,15 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private ImageView imageView;
     private NioClient mClient = null;
 
-    private String flag = "24aa5366b7223b1b30c0620326222275";
-    private byte[] flagBytes = flag.getBytes();
+    public static String flag = "24aa5366b7223b1b30c0620326222275";
+    public static byte[] flagBytes = flag.getBytes();
 
     private static final String IP = "10.2.1.216";
     private static final int PORT = 7000;
     private long timestamp;
+
+
+    NettyClient nettyClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,12 +101,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onPreviewFrame(byte[] data, Camera camera) {
         if (data == null) return;
 
-        if (System.currentTimeMillis() - timestamp < 400) return;
-
-        if (!mClient.isConnected()) {
-            reConnect();
-            return;
-        }
+        if (System.currentTimeMillis() - timestamp < 100) return;
 
         ByteArrayOutputStream outputSteam = new ByteArrayOutputStream();
         YuvImage yuvImage = new YuvImage(data, IMAGE_FORMAT, SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT, null);
@@ -123,16 +121,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             e.printStackTrace();
         }
 
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                imageView.setImageBitmap(finalBitmap);
-//            }
-//        });
-
         timestamp = System.currentTimeMillis();
-        mMessageProcessor.send(mClient, jpegByte);
-        mMessageProcessor.send(mClient, flag.getBytes());
+        nettyClient.sendData(jpegByte);
+        nettyClient.sendData(flagBytes);
+
         camera.addCallbackBuffer(data);
     }
 
@@ -195,7 +187,33 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
     private void openSocket() {
-        mClient.connect();
+        nettyClient = new NettyClient();
+        nettyClient.setReceiveCallback(new TimeClientHandler.ReceiveCallback() {
+            @Override
+            public void onReceiveData(byte[] data) {
+                if (data != null) {
+                    final Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            imageView.setImageBitmap(bitmap);
+                        }
+                    });
+                }
+            }
+        });
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    nettyClient.connect(PORT, IP);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
         if (!mClient.isConnected()) {
             statusLabel.setText("Connectioning");
         }
@@ -335,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                             if (buffer.size() > 0) {
                                 byte[] next = buffer.removeFirst();
                                 byte[] total = new byte[ttt.length + next.length];
-                                System.arraycopy(temp, i + flagBytes.length, total,0, ttt.length);
+                                System.arraycopy(temp, i + flagBytes.length, total, 0, ttt.length);
                                 System.arraycopy(next, 0, total, ttt.length, next.length);
                                 buffer.addFirst(total);
                             } else {
@@ -349,7 +367,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                             byte[] next = buffer.removeFirst();
                             byte[] total = new byte[temp.length + next.length];
                             System.arraycopy(temp, 0, total, 0, temp.length);
-                            System.arraycopy(next, 0 ,total, temp.length, next.length);
+                            System.arraycopy(next, 0, total, temp.length, next.length);
                             buffer.addFirst(total);
                         } else {
                             buffer.add(temp);
@@ -386,8 +404,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                         }
                     });
                 }
-
-
             }
         }
     };
