@@ -33,6 +33,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import io.netty.buffer.ByteBufOutputStream;
+
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback,
         Camera.PreviewCallback, View.OnClickListener {
 
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onPreviewFrame(byte[] data, Camera camera) {
         if (data == null) return;
 
-        if (System.currentTimeMillis() - timestamp < 100) return;
+        if (System.currentTimeMillis() - timestamp < 400) return;
 
         if (!mClient.isConnected()) {
             reConnect();
@@ -111,6 +113,12 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         byte[] jpegByte = outputSteam.toByteArray();
         final Bitmap bmp = BitmapFactory.decodeByteArray(jpegByte, 0, outputSteam.size());
+        final Bitmap finalBitmap = ImageUtils.rotate(bmp, 90);
+
+        outputSteam.reset();
+        finalBitmap.compress(Bitmap.CompressFormat.JPEG, 30, outputSteam);
+        jpegByte = outputSteam.toByteArray();
+
         try {
             outputSteam.close();
         } catch (IOException e) {
@@ -120,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                imageView.setImageBitmap(bmp);
+                imageView.setImageBitmap(finalBitmap);
             }
         });
 
@@ -128,9 +136,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         mMessageProcessor.send(mClient, jpegByte);
         mMessageProcessor.send(mClient, flag.getBytes());
         camera.addCallbackBuffer(data);
-
-//        mMessageProcessor.send(mClient, "hello world!".getBytes());
-//        mMessageProcessor.send(mClient, flag.getBytes());
     }
 
     private void checkPermission() {
@@ -158,7 +163,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         mParams.setPreviewSize(SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT);
         mParams.setPreviewFormat(IMAGE_FORMAT); // setting preview format：YV12
         mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+        mParams.setRotation(90);
         mCamera.setParameters(mParams); // setting camera parameters
+        mCamera.setDisplayOrientation(90);
         try {
             mCamera.setPreviewDisplay(holder);
         } catch (IOException ioe) {
@@ -271,6 +278,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     protected void onDestroy() {
         super.onDestroy();
         mClient.disconnect();
+
     }
 
     private IConnectListener mConnectResultListener = new IConnectListener() {
@@ -296,6 +304,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private BaseMessageProcessor mMessageProcessor = new BaseMessageProcessor() {
 
         int packCount = 0;
+
+        ByteBufOutputStream byteBufOutputStream;
 
         @Override
         public void onReceiveMessages(BaseClient mClient, LinkedList<Message> mQueen) {

@@ -1,5 +1,7 @@
 package com.example.hubaoyu.threebody;
 
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.os.Environment;
 
 import java.io.File;
@@ -27,6 +29,19 @@ public class ImageUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 旋转图片
+     * @param bitmap 要旋转的图片
+     * @param angle 旋转角度
+     * @return bitmap
+     */
+    public static Bitmap rotate(Bitmap bitmap, int angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
+                bitmap.getHeight(), matrix, true);
     }
 
     public static File getOutputMediaFile(int type) {
