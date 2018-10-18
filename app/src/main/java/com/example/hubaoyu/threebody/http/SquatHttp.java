@@ -2,6 +2,7 @@ package com.example.hubaoyu.threebody.http;
 
 import android.util.Log;
 
+import com.example.hubaoyu.threebody.MainActivity;
 import com.example.hubaoyu.threebody.MainThreadUtils;
 import com.example.hubaoyu.threebody.model.SquatModel;
 import com.example.hubaoyu.threebody.model.SquatModelResponse;
@@ -40,11 +41,31 @@ public class SquatHttp {
     }
 
     private void pollingData() {
-        if (stop) {
-            return;
+        while (true) {
+            if (stop) {
+                break;
+            }
+            long lastRequestTime = System.currentTimeMillis();
+            getData();
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastRequestTime > 50) {
+                getData();
+            } else {
+                try {
+                    Log.d("huangchen", String.valueOf(50 - (currentTime - lastRequestTime)));
+                    Thread.sleep(50 - (currentTime - lastRequestTime));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                getData();
+            }
         }
-        long lastRequestTime = System.currentTimeMillis();
-        final Request request = new Request.Builder().url("http://10.2.25.238:8100/hackthon/user").build();
+
+
+    }
+
+    private void getData() {
+        final Request request = new Request.Builder().url("http://" + MainActivity.IP + ":8100/hackthon/user").build();
         try {
             Response response = mOkHttpClient.newCall(request).execute();
             ResponseBody responseBody = response.body();
@@ -63,18 +84,6 @@ public class SquatHttp {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastRequestTime > 100) {
-            pollingData();
-        } else {
-            try {
-                Thread.sleep(100 - (currentTime - lastRequestTime));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            pollingData();
-        }
-
     }
 
     private class MyRunable implements Runnable {

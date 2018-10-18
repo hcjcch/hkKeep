@@ -74,4 +74,26 @@
         android:textSize="30sp"
         android:text="当前动作：蹲下" />
 
+    <TextView
+        android:id="@+id/textview_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#ffffffff"
+        tools:text="label" />
+
+    <TextView
+        android:id="@+id/textview_tips"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textview_label"
+        android:layout_marginTop="20dp"
+        android:textColor="#ffffffff"
+        tools:text="tips" />
+
+    <ImageView
+        android:id="@+id/imageview"
+        android:layout_width="320dp"
+        android:layout_height="240dp"
+        android:layout_alignParentBottom="true" />
+
 </RelativeLayout>
