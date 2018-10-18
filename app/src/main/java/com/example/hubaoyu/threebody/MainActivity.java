@@ -18,10 +18,16 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.hubaoyu.threebody.helper.DataHelper;
+import com.example.hubaoyu.threebody.http.SquatHttp;
+import com.example.hubaoyu.threebody.model.SquatModel;
+import com.example.hubaoyu.threebody.model.ViewModel;
+import com.example.hubaoyu.threebody.ui.KeepFontTextView;
 import com.open.net.client.impl.tcp.nio.NioClient;
 import com.open.net.client.structures.BaseClient;
 import com.open.net.client.structures.BaseMessageProcessor;
@@ -34,6 +40,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 import io.netty.buffer.ByteBufOutputStream;
+import rx.functions.Action1;
+
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback,
         Camera.PreviewCallback, View.OnClickListener {
@@ -52,6 +60,15 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private SurfaceHolder mSurfaceHolder;
     private int REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
+    private FrameLayout actionButton;
+    private TextView startTips;
+    private KeepFontTextView textNumber;
+    private TextView textStatus;
+
+
+    private SquatHttp squatHttp;
+    private DataHelper dataHelper;
+    private TriggerVoiceController triggerVoiceController;
     private TextView recContent, statusLabel;
     private ImageView imageView;
     private NioClient mClient = null;
@@ -59,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private String flag = "24aa5366b7223b1b30c0620326222275";
     private byte[] flagBytes = flag.getBytes();
 
-    private static final String IP = "10.2.1.216";
+    public static final String IP = "10.2.1.216";
     private static final int PORT = 7000;
     private long timestamp;
 
@@ -70,10 +87,34 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         initView();
         setListener();
         checkPermission();
+        squatHttp = new SquatHttp();
+        dataHelper = new DataHelper();
+        triggerVoiceController = new TriggerVoiceController(this);
+        squatHttp.setDataCall(new Action1<SquatModel>() {
+            @Override
+            public void call(SquatModel squatModel) {
+                ViewModel viewModel = ViewModel.squatToViewModel(squatModel);
+                textNumber.setText(String.valueOf(viewModel.getCount()));
+                textStatus.setText(viewModel.getStatusString());
+                if (squatModel.getToast() != null && !squatModel.getToast().equals("")) {
+                    startTips.setVisibility(View.VISIBLE);
+                    startTips.setText(squatModel.getToast());
+                } else {
+                    startTips.setVisibility(View.GONE);
+                }
+                if (squatModel.getStatus() != 0) {
+                    triggerVoiceController.play(dataHelper.countToAudio(squatModel.getCount()));
+                }
+            }
+        });
     }
 
     private void initView() {
-        mSurfaceView = (SurfaceView) findViewById(R.id.sv_recording);
+        actionButton = findViewById(R.id.layout_start_squat);
+        startTips = findViewById(R.id.text_start_tips);
+        textNumber = findViewById(R.id.text_number);
+        textStatus = findViewById(R.id.text_status);
+        mSurfaceView = findViewById(R.id.sv_recording);
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.setFixedSize(SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT);
         mSurfaceHolder.addCallback(this);
@@ -89,7 +130,19 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
     private void setListener() {
-        // set Listener if you want, eg: onClickListener
+        actionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 开始深蹲，换界面，显示SufaceView
+                startTips.setVisibility(View.VISIBLE);
+                actionButton.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        squatHttp.start();
+                    }
+                }, 2000);
+            }
+        });
     }
 
     @Override
@@ -275,6 +328,12 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
     @Override
+    protected void onStop() {
+        squatHttp.stop();
+        triggerVoiceController.stop();
+        super.onStop();
+    }
+
     protected void onDestroy() {
         super.onDestroy();
         mClient.disconnect();
