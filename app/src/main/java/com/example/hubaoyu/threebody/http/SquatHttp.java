@@ -37,7 +37,8 @@ public class SquatHttp {
 
     public void stop() {
         stop = true;
-        executorService.shutdownNow();
+        if (executorService != null)
+            executorService.shutdownNow();
     }
 
     private void pollingData() {
