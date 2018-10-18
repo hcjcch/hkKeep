@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 } else {
                     startTips.setVisibility(View.GONE);
                 }
-                if (squatModel.getStatus() != 0) {
+                if (squatModel.getStatus() != 0 && squatModel.getCount() != 0) {
                     triggerVoiceController.play(dataHelper.countToAudio(squatModel.getCount()));
                 }
             }
