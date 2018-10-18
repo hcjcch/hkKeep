@@ -15,9 +15,11 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 public class NettyClient implements TimeClientHandler.ReceiveCallback {
 
     TimeClientHandler.ReceiveCallback receiveCallback;
+    EventLoopGroup group;
 
     public void setReceiveCallback(TimeClientHandler.ReceiveCallback receiveCallback) {
         this.receiveCallback = receiveCallback;
+        group = new NioEventLoopGroup();
     }
 
     @Override
@@ -30,7 +32,6 @@ public class NettyClient implements TimeClientHandler.ReceiveCallback {
     TimeClientHandler timeClientHandler;
 
     public void connect(int port, String host) throws Exception {
-        EventLoopGroup group = new NioEventLoopGroup();
         try {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(group).channel(NioSocketChannel.class).option(ChannelOption.TCP_NODELAY, true)
@@ -38,11 +39,7 @@ public class NettyClient implements TimeClientHandler.ReceiveCallback {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             timeClientHandler = new TimeClientHandler(NettyClient.this);
-//                            ByteBuf byteBuf = Unpooled.buffer(MainActivity.flagBytes.length);
-//                            byteBuf.writeBytes(MainActivity.flagBytes);
-//                            ByteBufUtil.writeUtf8(byteBuf, MainActivity.flag);
                             ch.pipeline()
-//                                    .addLast(new LineBasedFrameDecoder(Integer.MAX_VALUE))
                                     .addLast(new DelimiterBasedFrameDecoder(Integer.MAX_VALUE, ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, MainActivity.flag)))
                                     .addLast(timeClientHandler);
                         }
@@ -58,6 +55,13 @@ public class NettyClient implements TimeClientHandler.ReceiveCallback {
     }
 
     public void sendData(byte[] data) {
-        timeClientHandler.channelWrite(data);
+        if (timeClientHandler != null)
+            timeClientHandler.channelWrite(data);
+    }
+
+    public void disConnect() {
+        if (group != null) {
+            group.shutdownGracefully();
+        }
     }
 }

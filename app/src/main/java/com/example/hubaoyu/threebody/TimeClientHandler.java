@@ -17,12 +17,14 @@ public class TimeClientHandler extends ChannelInboundHandlerAdapter {
     ReceiveCallback receiveCallback;
 
     ChannelHandlerContext ctx;
+
     public TimeClientHandler(ReceiveCallback receiveCallback) {
         this.receiveCallback = receiveCallback;
         byte[] req = "QUERY TIME ORDER".getBytes();
         message = Unpooled.buffer(req.length);
         message.writeBytes(req);
     }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         this.ctx = ctx;
@@ -30,9 +32,11 @@ public class TimeClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void channelWrite(byte[] data) {
-        ByteBuf message = Unpooled.buffer(data.length);
-        message.writeBytes(data);
-        ctx.writeAndFlush(message);
+        if (ctx != null) {
+            ByteBuf message = Unpooled.buffer(data.length);
+            message.writeBytes(data);
+            ctx.writeAndFlush(message);
+        }
     }
 
     @Override
@@ -40,12 +44,13 @@ public class TimeClientHandler extends ChannelInboundHandlerAdapter {
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
-        if(receiveCallback != null) {
+        if (receiveCallback != null) {
             receiveCallback.onReceiveData(req);
         }
 //        String body = new String(req, "UTF-8");
         Log.d("kal", "receive package length : " + req.length);
     }
+
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
