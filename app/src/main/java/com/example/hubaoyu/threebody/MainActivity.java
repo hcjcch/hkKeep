@@ -2,32 +2,38 @@ package com.example.hubaoyu.threebody;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
+import android.graphics.Point;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.Size;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
+import com.open.net.client.impl.tcp.bio.BioClient;
+import com.open.net.client.impl.tcp.nio.NioClient;
+import com.open.net.client.structures.BaseClient;
+import com.open.net.client.structures.BaseMessageProcessor;
+import com.open.net.client.structures.IConnectListener;
+import com.open.net.client.structures.TcpAddress;
+import com.open.net.client.structures.message.Message;
+
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback,
         Camera.PreviewCallback, View.OnClickListener {
@@ -35,16 +41,22 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     // raw frame resolution: 1280x720, image format is: YV12
     // you need get all resolution that supported on your devices;
     // my phone is HUAWEI honor 6Plus, most devices can use 1280x720
-    private static final int SRC_FRAME_WIDTH = 1280;
-    private static final int SRC_FRAME_HEIGHT = 720;
+    private static final int SRC_FRAME_WIDTH = 320;
+    private static final int SRC_FRAME_HEIGHT = 240;
     private static final int IMAGE_FORMAT = ImageFormat.YV12;
 
     private Camera mCamera;
     private Camera.Parameters mParams;
     private SurfaceView mSurfaceView;
     private SurfaceHolder mSurfaceHolder;
-
     private int REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+
+
+    private TextView recContent, statusLabel;
+    private NioClient mClient = null;
+
+    private static final String IP = "10.2.1.216";
+    private static final int PORT = 7000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +73,13 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         mSurfaceHolder.setFixedSize(SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT);
         mSurfaceHolder.addCallback(this);
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+        statusLabel = findViewById(R.id.textview_label);
+        recContent = findViewById(R.id.textview_tips);
+
+        mClient = new NioClient(mMessageProcessor, mConnectResultListener);
+        mClient.setConnectAddress(new TcpAddress[]{new TcpAddress(IP, PORT)});
+        openSocket();
     }
 
     private void setListener() {
@@ -71,33 +90,24 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onClick(View v) {
     }
 
+    long timestamp;
+
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
-//        ByteArrayOutputStream baos;
-//        byte[] rawImage;
-//        Bitmap bitmap;
-//
-////        camera.setOneShotPreviewCallback(null);
-//        //处理data
-//        Camera.Size previewSize = camera.getParameters().getPreviewSize();//获取尺寸,格式转换的时候要用到
-//        BitmapFactory.Options newOpts = new BitmapFactory.Options();
-//        newOpts.inJustDecodeBounds = true;
-//        YuvImage yuvimage = new YuvImage(
-//                data,
-//                IMAGE_FORMAT,
-//                previewSize.width,
-//                previewSize.height,
-//                null);
-//        baos = new ByteArrayOutputStream();
-//        yuvimage.compressToJpeg(new Rect(0, 0, previewSize.width, previewSize.height), 100, baos);// 80--JPG图片的质量[0-100],100最高
-//        rawImage = baos.toByteArray();
-//        //将rawImage转换成bitmap
-//        BitmapFactory.Options options = new BitmapFactory.Options();
-//        options.inPreferredConfig = Bitmap.Config.RGB_565;
-//        bitmap = BitmapFactory.decodeByteArray(rawImage, 0, rawImage.length, options);
+        if (data == null) return;
 
-        ImageUtils.saveImageData(data);
+        if (System.currentTimeMillis() - timestamp < 100) return;
+
+        if (!mClient.isConnected()) {
+            reConnect();
+            return;
+        }
+
+        timestamp = System.currentTimeMillis();
+//        ImageUtils.saveImageData(data);
+        mMessageProcessor.send(mClient, data);
         camera.addCallbackBuffer(data);
+//        Log.d("kal", "remainding:" + mClient.mWriteMessageQueen.size());
     }
 
     private void checkPermission() {
@@ -116,6 +126,38 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             Toast.makeText(this, "授权成功！", Toast.LENGTH_SHORT).show();
         }
     }
+
+//    public static Point getScreenMetrics(Context context){
+//        DisplayMetrics dm =context.getResources().getDisplayMetrics();
+//        int w_screen = dm.widthPixels;
+//        int h_screen = dm.heightPixels;
+//        return new Point(w_screen, h_screen);
+//
+//    }
+//
+//
+//    /**
+//     * 获取最佳预览大小
+//     * @param parameters 相机参数
+//     * @param screenResolution 屏幕宽高
+//     * @return
+//     */
+//    private Point getBestCameraResolution(Camera.Parameters parameters, Point screenResolution) {
+//        float tmp = 0f;
+//        float mindiff = 100f;
+//        float x_d_y = (float) screenResolution.x / (float) screenResolution.y;
+//        Size best = null;
+//        List<Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+//        for (Size s : supportedPreviewSizes) {
+//            tmp = Math.abs(((float) s.height / (float) s.width) - x_d_y);
+//            if (tmp < mindiff) {
+//                mindiff = tmp;
+//                best = s;
+//            }
+//        }
+//        return new Point(best.width, best.height);
+//    }
+
 
     private void openCamera(SurfaceHolder holder) {
         releaseCamera(); // release Camera, if not release camera before call camera, it will be locked
@@ -154,6 +196,23 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             }
             mCamera = null;
         }
+    }
+
+    private void openSocket() {
+        mClient.connect();
+        if (!mClient.isConnected()) {
+            statusLabel.setText("Connectioning");
+        }
+    }
+
+    private void closeSocket() {
+        mClient.disconnect();
+        statusLabel.setText("disconnect");
+    }
+
+    private void reConnect() {
+        mClient.reconnect();
+        statusLabel.setText("Re-Connectioning");
     }
 
     /**
@@ -217,4 +276,52 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mClient.disconnect();
+    }
+
+    private IConnectListener mConnectResultListener = new IConnectListener() {
+        @Override
+        public void onConnectionSuccess() {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    statusLabel.setText("Connection-Success");
+                }
+            });
+        }
+
+        @Override
+        public void onConnectionFailed() {
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    statusLabel.setText("Connection-Failed");
+                }
+            });
+        }
+    };
+
+    private BaseMessageProcessor mMessageProcessor = new BaseMessageProcessor() {
+
+        StringBuffer stringBuffer = new StringBuffer();
+
+        int packCount = 0;
+
+        @Override
+        public void onReceiveMessages(BaseClient mClient, LinkedList<Message> mQueen) {
+            for (int i = 0; i < mQueen.size(); i++) {
+                Message msg = mQueen.get(i);
+                final String s = new String(msg.data, msg.offset, msg.length);
+                packCount ++;
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        recContent.setText("pack：" + packCount);
+                    }
+                });
+            }
+        }
+    };
+
 }
