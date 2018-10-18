@@ -33,8 +33,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 
-import io.netty.buffer.ByteBufOutputStream;
-
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback,
         Camera.PreviewCallback, View.OnClickListener {
 
@@ -59,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private String flag = "24aa5366b7223b1b30c0620326222275";
     private byte[] flagBytes = flag.getBytes();
 
-    private static final String IP = "10.2.25.238";
+    private static final String IP = "10.2.1.216";
     private static final int PORT = 7000;
     private long timestamp;
 
@@ -125,12 +123,12 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             e.printStackTrace();
         }
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                imageView.setImageBitmap(finalBitmap);
-            }
-        });
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                imageView.setImageBitmap(finalBitmap);
+//            }
+//        });
 
         timestamp = System.currentTimeMillis();
         mMessageProcessor.send(mClient, jpegByte);
@@ -301,23 +299,95 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
     };
 
+
+    private boolean isEquals(byte[] src, int srcPos, byte[] des, int desPos, int len) {
+        for (int i = 0; i < len; i++) {
+            if (src[srcPos + i] != des[desPos + i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private BaseMessageProcessor mMessageProcessor = new BaseMessageProcessor() {
 
         int packCount = 0;
 
-        ByteBufOutputStream byteBufOutputStream;
+        LinkedList<byte[]> buffer = new LinkedList<>();
+
+        ByteArrayOutputStream byteArrayOutputStream;
+
+        private byte[] parsePackage() {
+
+            while (buffer.size() > 1) {
+                byte[] temp = buffer.removeFirst();
+
+                if (byteArrayOutputStream == null) {
+                    byteArrayOutputStream = new ByteArrayOutputStream();
+                }
+                for (int i = 0; i < temp.length; i++) {
+                    if (temp.length - i - flagBytes.length > 0) {
+                        if (!isEquals(temp, 0, flagBytes, 0, flagBytes.length)) {
+                            byteArrayOutputStream.write(temp[i]);
+                        } else {
+                            byte[] data = byteArrayOutputStream.toByteArray();
+                            byte[] ttt = new byte[temp.length - i - flagBytes.length];
+                            if (buffer.size() > 0) {
+                                byte[] next = buffer.removeFirst();
+                                byte[] total = new byte[ttt.length + next.length];
+                                System.arraycopy(temp, i + flagBytes.length, total,0, ttt.length);
+                                System.arraycopy(next, 0, total, ttt.length, next.length);
+                                buffer.addFirst(total);
+                            } else {
+                                System.arraycopy(temp, i + flagBytes.length, ttt, 0, ttt.length);
+                                buffer.add(ttt);
+                            }
+                            return data;
+                        }
+                    } else {
+                        if (buffer.size() > 0) {
+                            byte[] next = buffer.removeFirst();
+                            byte[] total = new byte[temp.length + next.length];
+                            System.arraycopy(temp, 0, total, 0, temp.length);
+                            System.arraycopy(next, 0 ,total, temp.length, next.length);
+                            buffer.addFirst(total);
+                        } else {
+                            buffer.add(temp);
+                        }
+                    }
+                }
+            }
+            return null;
+        }
 
         @Override
         public void onReceiveMessages(BaseClient mClient, LinkedList<Message> mQueen) {
             for (int i = 0; i < mQueen.size(); i++) {
-                Message msg = mQueen.get(i);
-                final String s = new String(msg.data, msg.offset, msg.length);
-                packCount++;
                 runOnUiThread(new Runnable() {
+                    @Override
                     public void run() {
-                        recContent.setText("pack：" + packCount);
+                        recContent.setText("pack：" + packCount++);
                     }
                 });
+
+
+                Message msg = mQueen.get(i);
+
+                byte[] temp = new byte[msg.length];
+                System.arraycopy(msg.data, msg.offset, temp, 0, msg.length);
+                buffer.addLast(temp);
+
+                byte[] data = parsePackage();
+                if (data != null) {
+                    final Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            imageView.setImageBitmap(bitmap);
+                        }
+                    });
+                }
+
+
             }
         }
     };
