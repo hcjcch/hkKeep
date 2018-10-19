@@ -91,15 +91,6 @@
         android:textColor="#ffffffff"
         tools:text="label" />
 
-    <TextView
-        android:id="@+id/textview_tips"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/textview_label"
-        android:layout_marginTop="20dp"
-        android:textColor="#ffffffff"
-        tools:text="tips" />
-
     <ImageView
         android:id="@+id/imageview"
         android:layout_width="80dp"

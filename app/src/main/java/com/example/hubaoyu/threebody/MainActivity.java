@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private DataHelper dataHelper;
     private TriggerVoiceController triggerVoiceController;
     private TextView recContent, statusLabel;
-    private ImageView imageView = new ImageView;
+    private ImageView imageView ;
 
     private ImageView[] imageViewLevel = new ImageView[3];
 
