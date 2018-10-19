@@ -37,9 +37,10 @@ public class ImageUtils {
      * @param angle 旋转角度
      * @return bitmap
      */
-    public static Bitmap rotate(Bitmap bitmap, int angle) {
+    public static Bitmap rotateAndScale(Bitmap bitmap, int angle, float sx, float sy) {
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
+        matrix.postScale(sx, sy);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(),
                 bitmap.getHeight(), matrix, true);
     }

@@ -43,8 +43,8 @@ import rx.functions.Action1;
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback,
         Camera.PreviewCallback, View.OnClickListener {
 
-    private static final int SRC_FRAME_WIDTH = 320;
-    private static final int SRC_FRAME_HEIGHT = 240;
+    private static final int SRC_FRAME_WIDTH = 640;
+    private static final int SRC_FRAME_HEIGHT = 480;
     //    private static final int IMAGE_FORMAT = ImageFormat.YV12;
     private static final int IMAGE_FORMAT = ImageFormat.NV21;
 
@@ -199,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         byte[] jpegByte = outputSteam.toByteArray();
         final Bitmap bmp = BitmapFactory.decodeByteArray(jpegByte, 0, outputSteam.size());
-        final Bitmap finalBitmap = ImageUtils.rotate(bmp, 90);
+        final Bitmap finalBitmap = ImageUtils.rotateAndScale(bmp, 90, 0.5f, 0.5f);
 
         outputSteam.reset();
         finalBitmap.compress(Bitmap.CompressFormat.JPEG, 30, outputSteam);
