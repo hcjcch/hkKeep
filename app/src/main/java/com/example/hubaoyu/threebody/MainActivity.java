@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public static String flag = "24aa5366b7223b1b30c0620326222275";
     public static byte[] flagBytes = flag.getBytes();
 
-    public static final String IP = "10.2.1.216";
+    public static final String IP = "172.31.98.242";
     private static final int PORT = 7000;
     private long timestamp;
 
@@ -210,7 +210,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
 
         timestamp = System.currentTimeMillis();
-        nettyClient.sendData(String.valueOf(System.currentTimeMillis()).getBytes());
         nettyClient.sendData(jpegByte);
         nettyClient.sendData(flagBytes);
         camera.addCallbackBuffer(data);
