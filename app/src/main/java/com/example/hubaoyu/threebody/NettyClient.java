@@ -11,11 +11,17 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import rx.functions.Action0;
 
 public class NettyClient implements TimeClientHandler.ReceiveCallback {
 
     TimeClientHandler.ReceiveCallback receiveCallback;
+    private Action0 inactiveCall;
     EventLoopGroup group;
+
+    public NettyClient(Action0 inactiveCall) {
+        this.inactiveCall = inactiveCall;
+    }
 
     public void setReceiveCallback(TimeClientHandler.ReceiveCallback receiveCallback) {
         this.receiveCallback = receiveCallback;
@@ -38,7 +44,12 @@ public class NettyClient implements TimeClientHandler.ReceiveCallback {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
-                            timeClientHandler = new TimeClientHandler(NettyClient.this);
+                            timeClientHandler = new TimeClientHandler(NettyClient.this, new Action0() {
+                                @Override
+                                public void call() {
+                                    inactiveCall.call();
+                                }
+                            });
                             ch.pipeline()
                                     .addLast(new DelimiterBasedFrameDecoder(Integer.MAX_VALUE, ByteBufUtil.writeUtf8(ByteBufAllocator.DEFAULT, MainActivity.flag)))
                                     .addLast(timeClientHandler);

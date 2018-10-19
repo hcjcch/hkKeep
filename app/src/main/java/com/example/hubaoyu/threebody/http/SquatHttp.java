@@ -53,7 +53,7 @@ public class SquatHttp {
                 getData();
             } else {
                 try {
-                    Log.d("huangchen", String.valueOf(50 - (currentTime - lastRequestTime)));
+//                    Log.d("huangchen", String.valueOf(50 - (currentTime - lastRequestTime)));
                     Thread.sleep(50 - (currentTime - lastRequestTime));
                 } catch (InterruptedException e) {
                     e.printStackTrace();

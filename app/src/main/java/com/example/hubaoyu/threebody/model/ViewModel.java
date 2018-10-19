@@ -9,11 +9,13 @@ public class ViewModel {
     private String statusString;
     private String toastString;
     private int count;
+    private String warning;
 
-    public ViewModel(String statusString, String toastString, int count) {
+    public ViewModel(String statusString, String toastString, int count, String warning) {
         this.statusString = statusString;
         this.toastString = toastString;
         this.count = count;
+        this.warning = warning;
     }
 
     public String getStatusString() {
@@ -51,6 +53,6 @@ public class ViewModel {
         }
         String toastString = source.getToast();
         int count = source.getCount();
-        return new ViewModel(statusString, toastString, count);
+        return new ViewModel(statusString, toastString, count, source.getWarning());
     }
 }

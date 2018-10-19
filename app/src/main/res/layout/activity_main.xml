@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,39 +7,39 @@
 
     <include layout="@layout/content_main" />
 
-    <FrameLayout
-        android:id="@+id/layout_start_squat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true">
+    <!--<FrameLayout-->
+    <!--android:id="@+id/layout_start_squat"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_alignParentBottom="true"-->
+    <!--android:layout_alignParentEnd="true"-->
+    <!--android:layout_alignParentRight="true">-->
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fab"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="@dimen/fab_margin"
-            app:backgroundTint="@color/colorAccent" />
+    <!--<android.support.design.widget.FloatingActionButton-->
+    <!--android:id="@+id/fab"-->
+    <!--android:layout_width="80dp"-->
+    <!--android:layout_height="80dp"-->
+    <!--android:layout_gravity="bottom|end"-->
+    <!--android:layout_margin="@dimen/fab_margin"-->
+    <!--app:backgroundTint="@color/colorAccent" />-->
 
-    </FrameLayout>
+    <!--</FrameLayout>-->
+
+    <!--<TextView-->
+    <!--android:layout_width="112dp"-->
+    <!--android:layout_height="112dp"-->
+    <!--android:layout_alignParentBottom="true"-->
+    <!--android:layout_alignParentEnd="true"-->
+    <!--android:layout_alignParentRight="true"-->
+    <!--android:gravity="center"-->
+    <!--android:text="开始\n深蹲"-->
+    <!--android:textColor="#ffffff"-->
+    <!--android:textSize="16sp"-->
+    <!--tools:ignore="HardcodedText" />-->
+
 
     <TextView
-        android:layout_width="112dp"
-        android:layout_height="112dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:gravity="center"
-        android:text="开始\n深蹲"
-        android:textColor="#ffffff"
-        android:textSize="16sp"
-        tools:ignore="HardcodedText" />
-
-
-    <TextView
-        android:id="@+id/text_start_tips"
+        android:id="@+id/text_warning"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
@@ -72,7 +71,18 @@
         android:layout_marginTop="14dp"
         android:textColor="#ffffff"
         android:textSize="30sp"
-        android:text="当前动作：蹲下" />
+        tools:text="当前动作：蹲下" />
+
+    <TextView
+        android:id="@+id/text_toast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_status"
+        android:layout_marginLeft="14dp"
+        android:layout_marginTop="14dp"
+        android:textColor="#ffffff"
+        android:textSize="20sp"
+        tools:text="当前动作：蹲下" />
 
     <TextView
         android:id="@+id/textview_label"
@@ -92,8 +102,44 @@
 
     <ImageView
         android:id="@+id/imageview"
-        android:layout_width="320dp"
-        android:layout_height="240dp"
-        android:layout_alignParentBottom="true" />
+        android:layout_width="80dp"
+        android:layout_height="107dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginRight="20dp" />
+
+    <LinearLayout
+        android:id="@+id/layout_physical_level"
+        android:layout_width="wrap_content"
+        android:layout_height="14dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="14dp"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/img_physical_level_one"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:src="@drawable/tc_icon_physical_star_gray" />
+
+        <ImageView
+            android:id="@+id/img_physical_level_two"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginLeft="3dp"
+            android:layout_marginStart="3dp"
+            android:src="@drawable/tc_icon_physical_star_gray" />
+
+        <ImageView
+            android:id="@+id/img_physical_level_three"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginLeft="3dp"
+            android:layout_marginStart="3dp"
+            android:src="@drawable/tc_icon_physical_star_gray" />
+
+    </LinearLayout>
 
 </RelativeLayout>

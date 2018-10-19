@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import rx.functions.Action0;
 
 public class TimeClientHandler extends ChannelInboundHandlerAdapter {
     private final ByteBuf message;
@@ -16,10 +17,13 @@ public class TimeClientHandler extends ChannelInboundHandlerAdapter {
 
     ReceiveCallback receiveCallback;
 
+    private Action0 inactiveCall;
+
     ChannelHandlerContext ctx;
 
-    public TimeClientHandler(ReceiveCallback receiveCallback) {
+    public TimeClientHandler(ReceiveCallback receiveCallback, Action0 inactiveCall) {
         this.receiveCallback = receiveCallback;
+        this.inactiveCall = inactiveCall;
         byte[] req = "QUERY TIME ORDER".getBytes();
         message = Unpooled.buffer(req.length);
         message.writeBytes(req);
@@ -55,5 +59,11 @@ public class TimeClientHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
         ctx.close();
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
+        inactiveCall.call();
     }
 }

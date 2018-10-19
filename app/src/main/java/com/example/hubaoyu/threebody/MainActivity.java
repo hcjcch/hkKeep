@@ -14,6 +14,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -27,11 +29,13 @@ import com.example.hubaoyu.threebody.helper.DataHelper;
 import com.example.hubaoyu.threebody.http.SquatHttp;
 import com.example.hubaoyu.threebody.model.SquatModel;
 import com.example.hubaoyu.threebody.model.ViewModel;
+import com.example.hubaoyu.threebody.ui.FilletOutlineProvider;
 import com.example.hubaoyu.threebody.ui.KeepFontTextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import rx.functions.Action0;
 import rx.functions.Action1;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback,
@@ -49,16 +53,16 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private int REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
     private FrameLayout actionButton;
-    private TextView startTips;
+    private TextView textWarning;
     private KeepFontTextView textNumber;
     private TextView textStatus;
-
+    private TextView textToast;
 
     private SquatHttp squatHttp;
     private DataHelper dataHelper;
     private TriggerVoiceController triggerVoiceController;
     private TextView recContent, statusLabel;
-    private ImageView imageView;
+    private ImageView[] imageView = new ImageView[3];
 
     public static String flag = "24aa5366b7223b1b30c0620326222275";
     public static byte[] flagBytes = flag.getBytes();
@@ -69,6 +73,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
 
     NettyClient nettyClient;
+    private long receiveTime;
+    private long lastShowToastTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,24 +93,41 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 textNumber.setText(String.valueOf(viewModel.getCount()));
                 textStatus.setText(viewModel.getStatusString());
                 if (squatModel.getToast() != null && !squatModel.getToast().equals("")) {
-                    startTips.setVisibility(View.VISIBLE);
-                    startTips.setText(squatModel.getToast());
+                    textToast.setVisibility(View.VISIBLE);
+                    textToast.setText(squatModel.getToast());
                 } else {
-                    startTips.setVisibility(View.GONE);
+                    textToast.setVisibility(View.GONE);
                 }
                 if (squatModel.getStatus() != 0 && squatModel.getCount() != 0) {
                     triggerVoiceController.play(dataHelper.countToAudio(squatModel.getCount()));
                 }
+                if (!TextUtils.isEmpty(squatModel.getWarning())) {
+                    textWarning.setVisibility(View.VISIBLE);
+                    textWarning.setText(squatModel.getWarning());
+                    lastShowToastTime = System.currentTimeMillis();
+                    if (squatModel.getWarning().contains("再往下")) {
+                        triggerVoiceController.play("lower.mp3");
+                    } else if (squatModel.getWarning().contains("太久")) {
+                        triggerVoiceController.play("too_long.mp3");
+                    }
+                } else {
+                    if (System.currentTimeMillis() - lastShowToastTime > 2000) {
+                        textWarning.setVisibility(View.GONE);
+                    }
+                }
             }
         });
+        squatHttp.start();
     }
 
+
     private void initView() {
-        actionButton = findViewById(R.id.layout_start_squat);
-        startTips = findViewById(R.id.text_start_tips);
+//        actionButton = findViewById(R.id.layout_start_squat);
+        textWarning = findViewById(R.id.text_warning);
         textNumber = findViewById(R.id.text_number);
         textStatus = findViewById(R.id.text_status);
         mSurfaceView = findViewById(R.id.sv_recording);
+        textToast = findViewById(R.id.text_toast);
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.setFixedSize(SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT);
         mSurfaceHolder.addCallback(this);
@@ -113,24 +136,30 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         statusLabel = findViewById(R.id.textview_label);
         recContent = findViewById(R.id.textview_tips);
         imageView = findViewById(R.id.imageview);
-
+        imageView[0] = findViewById(R.id.img_physical_level_one);
+        imageView[1] = findViewById(R.id.img_physical_level_two);
+        imageView[2] = findViewById(R.id.img_physical_level_three);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            imageView.setOutlineProvider(new FilletOutlineProvider(6));
+            imageView.setClipToOutline(true);
+        }
         openSocket();
     }
 
     private void setListener() {
-        actionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+//        actionButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
                 // 开始深蹲，换界面，显示SufaceView
-                startTips.setVisibility(View.VISIBLE);
-                actionButton.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        squatHttp.start();
-                    }
-                }, 2000);
-            }
-        });
+//                textWarning.setVisibility(View.VISIBLE);
+//                actionButton.postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//
+//                    }
+//                }, 2000);
+//            }
+//        });
     }
 
     @Override
@@ -141,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onPreviewFrame(byte[] data, Camera camera) {
         if (data == null) return;
 
-        if (System.currentTimeMillis() - timestamp < 50) return;
+        if (System.currentTimeMillis() - timestamp < 80) return;
 
         ByteArrayOutputStream outputSteam = new ByteArrayOutputStream();
         YuvImage yuvImage = new YuvImage(data, IMAGE_FORMAT, SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT, null);
@@ -190,6 +219,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_BACK);
         mParams = mCamera.getParameters();
         setCameraDisplayOrientation(this, Camera.CameraInfo.CAMERA_FACING_BACK, mCamera);
+//        mParams.setPreviewSize(1920, 1080);
+//        mParams.setPictureSize(SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT);
         mParams.setPreviewSize(SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT);
         mParams.setPreviewFormat(IMAGE_FORMAT); // setting preview format：YV12
         mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
@@ -227,11 +258,18 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
     private void openSocket() {
-        nettyClient = new NettyClient();
+        nettyClient = new NettyClient(new Action0() {
+            @Override
+            public void call() {
+
+            }
+        });
         nettyClient.setReceiveCallback(new TimeClientHandler.ReceiveCallback() {
             @Override
             public void onReceiveData(byte[] data) {
                 if (data != null) {
+                    Log.d("huangchen1", "beforeSetBitMap   " + String.valueOf((System.currentTimeMillis() - receiveTime)));
+                    receiveTime = System.currentTimeMillis();
                     final Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
                     runOnUiThread(new Runnable() {
                         public void run() {
@@ -239,6 +277,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                         }
                     });
                 }
+                Log.d("huangchen1", "setBitMap   " + String.valueOf((System.currentTimeMillis() - receiveTime)));
+                receiveTime = System.currentTimeMillis();
             }
         });
 
