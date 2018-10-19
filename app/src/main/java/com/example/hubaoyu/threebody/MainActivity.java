@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     NettyClient nettyClient;
     private long receiveTime;
     private long lastShowToastTime;
+    private int lastCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,17 +105,20 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 }
                 if (squatModel.getStatus() != 0 && squatModel.getCount() != 0) {
                     triggerVoiceController.play(dataHelper.countToAudio(squatModel.getCount()));
-                    int level = dataHelper.levelCheck(squatModel.getAngles().get(squatModel.getAngles().size() - 1));
-                    for (int i = 0; i < 3; i++) {
-                        if (i <= level) {
-                            imageViewLevel[i].setImageResource(R.drawable.tc_icon_physical_star_green);
-                        } else {
-                            imageViewLevel[i].setImageResource(R.drawable.tc_icon_physical_star_gray);
+                    if (squatModel.getCount() != lastCount) {
+                        int level = dataHelper.levelCheck(squatModel.getAngles().get(squatModel.getAngles().size() - 1));
+                        for (int i = 0; i < 3; i++) {
+                            if (i <= level) {
+                                imageViewLevel[i].setImageResource(R.drawable.tc_icon_physical_star_green);
+                            } else {
+                                imageViewLevel[i].setImageResource(R.drawable.tc_icon_physical_star_gray);
+                            }
+                        }
+                        if (level == DataHelper.LEVEL_THIRD) {
+                            AnimUtils.showPerfect(textPerfect);
                         }
                     }
-                    if (level == DataHelper.LEVEL_THIRD) {
-                        AnimUtils.showPerfect(textPerfect);
-                    }
+                    lastCount = squatModel.getCount();
                 }
                 if (!TextUtils.isEmpty(squatModel.getWarning())) {
                     textWarning.setVisibility(View.VISIBLE);

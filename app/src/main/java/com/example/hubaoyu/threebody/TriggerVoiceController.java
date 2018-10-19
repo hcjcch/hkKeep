@@ -6,6 +6,8 @@ import android.content.res.AssetManager;
 import android.media.MediaPlayer;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 触发式语音
@@ -16,17 +18,20 @@ public class TriggerVoiceController {
     private String audioPath = "";
     private Context context;
     private MediaPlayer mediaPlayer;
+    private List<String> audioPathList = new ArrayList<>();
 
     public TriggerVoiceController(Context context) {
         this.context = context;
         mediaPlayer = new MediaPlayer();
+        audioPathList.add("");
     }
 
     public void play(String audioPath) {
-        if (this.audioPath.equals(audioPath)) {
+        if (this.audioPathList.contains(audioPath)) {
             return;
         }
         try {
+            this.audioPathList.add(audioPath);
             this.audioPath = audioPath;
             play();
         } catch (IOException ignore) {
