@@ -31,7 +31,9 @@ public class TriggerVoiceController {
             return;
         }
         try {
-            this.audioPathList.add(audioPath);
+            if (audioPath.startsWith("N")) {
+                this.audioPathList.add(audioPath);
+            }
             this.audioPath = audioPath;
             play();
         } catch (IOException ignore) {
