@@ -62,7 +62,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private DataHelper dataHelper;
     private TriggerVoiceController triggerVoiceController;
     private TextView recContent, statusLabel;
-    private ImageView[] imageView = new ImageView[3];
+    private ImageView imageView = new ImageView;
+
+    private ImageView[] imageViewLevel = new ImageView[3];
 
     public static String flag = "24aa5366b7223b1b30c0620326222275";
     public static byte[] flagBytes = flag.getBytes();
@@ -71,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private static final int PORT = 7000;
     private long timestamp;
 
-
+    Thread thread = null;
     NettyClient nettyClient;
     private long receiveTime;
     private long lastShowToastTime;
@@ -127,7 +129,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         textNumber = findViewById(R.id.text_number);
         textStatus = findViewById(R.id.text_status);
         mSurfaceView = findViewById(R.id.sv_recording);
-        textToast = findViewById(R.id.text_toast);
         mSurfaceHolder = mSurfaceView.getHolder();
         mSurfaceHolder.setFixedSize(SRC_FRAME_WIDTH, SRC_FRAME_HEIGHT);
         mSurfaceHolder.addCallback(this);
@@ -136,9 +137,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         statusLabel = findViewById(R.id.textview_label);
         recContent = findViewById(R.id.textview_tips);
         imageView = findViewById(R.id.imageview);
-        imageView[0] = findViewById(R.id.img_physical_level_one);
-        imageView[1] = findViewById(R.id.img_physical_level_two);
-        imageView[2] = findViewById(R.id.img_physical_level_three);
+        imageViewLevel[0] = findViewById(R.id.img_physical_level_one);
+        imageViewLevel[1] = findViewById(R.id.img_physical_level_two);
+        imageViewLevel[2] = findViewById(R.id.img_physical_level_three);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             imageView.setOutlineProvider(new FilletOutlineProvider(6));
             imageView.setClipToOutline(true);
@@ -282,17 +283,17 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             }
         });
 
-        new Thread(new Runnable() {
+        thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     nettyClient.connect(PORT, IP);
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        });
+        thread.start();
 
         statusLabel.setText("Connectioning");
     }
@@ -377,6 +378,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     protected void onDestroy() {
         super.onDestroy();
         nettyClient.disConnect();
+        thread.stop();
     }
 
 }
