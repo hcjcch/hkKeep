@@ -35,6 +35,7 @@ import com.example.hubaoyu.threebody.ui.KeepFontTextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import rx.functions.Action0;
 import rx.functions.Action1;
@@ -206,10 +207,13 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
 
         timestamp = System.currentTimeMillis();
+        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+        byteBuffer.putLong(System.currentTimeMillis());
+        nettyClient.sendData(byteBuffer.array());
         nettyClient.sendData(jpegByte);
         nettyClient.sendData(flagBytes);
-
         camera.addCallbackBuffer(data);
+        byteBuffer.clear();
     }
 
     private void checkPermission() {
