@@ -19,9 +19,9 @@ public class DataHelper {
     }
 
     public int levelCheck(double angle) {
-        if (angle > 0.15 && angle <= 0.2) {
+        if (angle > 0.4) {
             return LEVEL_THIRD;
-        } else if (angle >= 0.1 && angle <= 0.15) {
+        } else if (angle >= 0.2 && angle <= 0.4) {
             return LEVEL_SECOND;
         } else {
             return LEVEL_FIRST;
