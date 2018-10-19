@@ -25,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.hubaoyu.threebody.helper.AnimUtils;
 import com.example.hubaoyu.threebody.helper.DataHelper;
 import com.example.hubaoyu.threebody.http.SquatHttp;
 import com.example.hubaoyu.threebody.model.SquatModel;
@@ -61,7 +62,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private SquatHttp squatHttp;
     private DataHelper dataHelper;
     private TriggerVoiceController triggerVoiceController;
-    private TextView recContent, statusLabel;
+    private TextView statusLabel;
+    private TextView textPerfect;
     private ImageView imageView ;
 
     private ImageView[] imageViewLevel = new ImageView[3];
@@ -102,6 +104,17 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 }
                 if (squatModel.getStatus() != 0 && squatModel.getCount() != 0) {
                     triggerVoiceController.play(dataHelper.countToAudio(squatModel.getCount()));
+                    int level = dataHelper.levelCheck(squatModel.getAngles().get(squatModel.getAngles().size() - 1));
+                    for (int i = 0; i < 3; i++) {
+                        if (i <= level) {
+                            imageViewLevel[i].setImageResource(R.drawable.tc_icon_physical_star_green);
+                        } else {
+                            imageViewLevel[i].setImageResource(R.drawable.tc_icon_physical_star_gray);
+                        }
+                    }
+                    if (level == DataHelper.LEVEL_THIRD) {
+                        AnimUtils.showPerfect(textPerfect);
+                    }
                 }
                 if (!TextUtils.isEmpty(squatModel.getWarning())) {
                     textWarning.setVisibility(View.VISIBLE);
@@ -125,6 +138,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     private void initView() {
 //        actionButton = findViewById(R.id.layout_start_squat);
+        textToast = findViewById(R.id.text_toast);
+        textPerfect = findViewById(R.id.text_perfect);
         textWarning = findViewById(R.id.text_warning);
         textNumber = findViewById(R.id.text_number);
         textStatus = findViewById(R.id.text_status);
@@ -135,7 +150,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         mSurfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
         statusLabel = findViewById(R.id.textview_label);
-        recContent = findViewById(R.id.textview_tips);
         imageView = findViewById(R.id.imageview);
         imageViewLevel[0] = findViewById(R.id.img_physical_level_one);
         imageViewLevel[1] = findViewById(R.id.img_physical_level_two);

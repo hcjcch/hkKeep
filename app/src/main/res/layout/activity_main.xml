@@ -133,4 +133,15 @@
 
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/text_perfect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="PERFECT"
+        android:textColor="#24C789"
+        android:visibility="gone"
+        android:textSize="80sp"
+        android:textStyle="bold" />
+
 </RelativeLayout>

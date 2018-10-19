@@ -1,5 +1,7 @@
 package com.example.hubaoyu.threebody.model;
 
+import java.util.List;
+
 /**
  * SquatModelResponse
  *
@@ -10,6 +12,7 @@ public class SquatModel {
     private String toast;
     private int count;
     private String warning;
+    private List<Double> angles;
 
     public int getStatus() {
         return status;
@@ -27,6 +30,10 @@ public class SquatModel {
         return warning;
     }
 
+    public List<Double> getAngles() {
+        return angles;
+    }
+
     @Override
     public String toString() {
         return "SquatModel{" +
@@ -34,6 +41,7 @@ public class SquatModel {
                 ", toast='" + toast + '\'' +
                 ", count=" + count +
                 ", warning='" + warning + '\'' +
+                ", angles=" + angles +
                 '}';
     }
 }

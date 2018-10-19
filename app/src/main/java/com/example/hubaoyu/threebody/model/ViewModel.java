@@ -1,5 +1,7 @@
 package com.example.hubaoyu.threebody.model;
 
+import java.util.List;
+
 /**
  * ViewModel
  *
@@ -10,12 +12,14 @@ public class ViewModel {
     private String toastString;
     private int count;
     private String warning;
+    private List<Double> angles;
 
-    public ViewModel(String statusString, String toastString, int count, String warning) {
+    public ViewModel(String statusString, String toastString, int count, String warning, List<Double> angles) {
         this.statusString = statusString;
         this.toastString = toastString;
         this.count = count;
         this.warning = warning;
+        this.angles = angles;
     }
 
     public String getStatusString() {
@@ -42,6 +46,10 @@ public class ViewModel {
         this.count = count;
     }
 
+    public List<Double> getAngles() {
+        return angles;
+    }
+
     public static ViewModel squatToViewModel(SquatModel source) {
         String statusString = "";
         if (source.getStatus() == 1) {
@@ -53,6 +61,6 @@ public class ViewModel {
         }
         String toastString = source.getToast();
         int count = source.getCount();
-        return new ViewModel(statusString, toastString, count, source.getWarning());
+        return new ViewModel(statusString, toastString, count, source.getWarning(), source.getAngles());
     }
 }
